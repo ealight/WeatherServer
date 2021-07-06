@@ -2,6 +2,7 @@ package study.softserve.scala
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.slf4j.LoggerFactory
 import weather.WeatherServiceHandler
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,6 +17,7 @@ object WeatherServer extends App {
 class WeatherServer() {
   def run(): Unit = {
     implicit val ec: ExecutionContext = system.dispatcher
+    val log = LoggerFactory.getLogger(this.getClass)
 
     val serverConfig = config.getConfig("application.server")
 
@@ -29,7 +31,7 @@ class WeatherServer() {
       .newServerAt(host, port)
       .bind(service)
 
-    binding.foreach { binding => println(s"gRPC server bound to: ${binding.localAddress}") }
+    binding.foreach { binding => log.info(s"gRPC server bound to: ${binding.localAddress}") }
   }
 }
 

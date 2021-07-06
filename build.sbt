@@ -16,6 +16,5 @@ inConfig(Compile)(Seq(
 libraryDependencies ++= Seq(
   "com.lightbend.akka" %% "akka-projection-kafka" % "1.2.1",
   "com.typesafe.akka" %% "akka-discovery" % akkaVersion,
-  "ch.qos.logback" % "logback-classic" % "1.1.3",
-  "net.debasishg" %% "redisclient" % "3.30"
+  "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
