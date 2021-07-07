@@ -6,11 +6,9 @@ import org.slf4j.LoggerFactory
 import weather.WeatherServiceHandler
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 object WeatherServer extends App {
-  val consumerSettings = ConsumerInitializer.setUp()
-
-  ConsumerInitializer.run(consumerSettings)
   new WeatherServer().run()
 }
 
@@ -31,7 +29,10 @@ class WeatherServer() {
       .newServerAt(host, port)
       .bind(service)
 
-    binding.foreach { binding => log.info(s"gRPC server bound to: ${binding.localAddress}") }
+    binding.onComplete {
+      case Success(value) => log.info(s"gRPC successfully server bound to: ${value.localAddress}")
+      case Failure(exception) => log.error(s"gRPC refused to start, reason: ${exception.getMessage}")
+    }
   }
 }
 
