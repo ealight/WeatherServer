@@ -1,10 +1,13 @@
 package study.softserve.scala
 
-import akka.http.scaladsl.Http
+import akka.http.scaladsl.{ConnectionContext, Http, HttpsConnectionContext}
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import org.slf4j.LoggerFactory
 import weather.WeatherServiceHandler
 
+import java.io.InputStream
+import java.security.{KeyStore, SecureRandom}
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -22,11 +25,29 @@ class WeatherServer() {
     val host = serverConfig.getString("host")
     val port = serverConfig.getInt("port")
 
+    val password: Array[Char] = "dendi135".toCharArray // do not store passwords in code, read them from somewhere safe!
+
+    val ks: KeyStore = KeyStore.getInstance("PKCS12")
+    val keystore: InputStream = getClass.getClassLoader.getResourceAsStream("server.p12")
+
+    ks.load(keystore, password)
+
+    val keyManagerFactory: KeyManagerFactory = KeyManagerFactory.getInstance("SunX509")
+    keyManagerFactory.init(ks, password)
+
+    val tmf: TrustManagerFactory = TrustManagerFactory.getInstance("SunX509")
+    tmf.init(ks)
+
+    val sslContext: SSLContext = SSLContext.getInstance("TLS")
+    sslContext.init(keyManagerFactory.getKeyManagers, tmf.getTrustManagers, new SecureRandom)
+    val https: HttpsConnectionContext = ConnectionContext.httpsServer(sslContext)
+
     val service: HttpRequest => Future[HttpResponse] =
       WeatherServiceHandler.withServerReflection(new WeatherServiceImpl())
 
     val binding = Http()
       .newServerAt(host, port)
+      .enableHttps(https)
       .bind(service)
 
     binding.onComplete {
